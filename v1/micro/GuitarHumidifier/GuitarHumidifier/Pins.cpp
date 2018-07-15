@@ -10,9 +10,9 @@
 void PinModeD(uint8_t pin, uint8_t mode)
 {
 	if (mode == 0)
-	DDRD |= _BV(pin);
+		DDRD &= ~_BV(pin);
 	else
-	DDRD &= ~_BV(pin);
+		DDRD |= _BV(pin);
 }
 
 void ShiftOutD(uint8_t dataPin, uint8_t clockPin, uint8_t bitOrder, uint8_t val)
@@ -33,7 +33,7 @@ void ShiftOutD(uint8_t dataPin, uint8_t clockPin, uint8_t bitOrder, uint8_t val)
 
 void DigitalReadD(uint8_t pin, uint8_t* value)
 {
-	*value = !!(PORTD & _BV(pin));
+	*value = !!(PIND & _BV(pin));
 }
 
 void DigitalWriteD(uint8_t pin, uint8_t value)

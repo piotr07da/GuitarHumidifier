@@ -142,16 +142,19 @@
     </ToolchainSettings>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Dht22.cpp">
+    <Compile Include="dht.cpp">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="Dht22.h">
+    <Compile Include="dht.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="Display.cpp">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="Display.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="GlobalConstants.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="main.cpp">
