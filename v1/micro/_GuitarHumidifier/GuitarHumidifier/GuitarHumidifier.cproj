@@ -108,7 +108,28 @@
     </ToolchainSettings>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Dht22.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Dht22.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Display.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Display.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="main.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Pins.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Timer.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Timer.h">
       <SubType>compile</SubType>
     </Compile>
   </ItemGroup>
