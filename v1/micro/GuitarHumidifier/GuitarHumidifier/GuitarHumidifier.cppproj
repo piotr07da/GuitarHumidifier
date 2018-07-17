@@ -142,12 +142,6 @@
     </ToolchainSettings>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="dht.cpp">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="dht.h">
-      <SubType>compile</SubType>
-    </Compile>
     <Compile Include="Display.cpp">
       <SubType>compile</SubType>
     </Compile>
