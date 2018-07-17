@@ -32,7 +32,7 @@ int8_t dht_getdata(int8_t *temperature, int8_t *humidity) {
 	//reset port
 	DHT_DDR |= (1<<DHT_INPUTPIN); //output
 	DHT_PORT |= (1<<DHT_INPUTPIN); //high
-	_delay_ms(100);
+	_delay_ms(2);
 
 	//send request
 	DHT_PORT &= ~(1<<DHT_INPUTPIN); //low
@@ -86,7 +86,7 @@ int8_t dht_getdata(int8_t *temperature, int8_t *humidity) {
 	//reset port
 	DHT_DDR |= (1<<DHT_INPUTPIN); //output
 	DHT_PORT |= (1<<DHT_INPUTPIN); //low
-	_delay_ms(100);
+	_delay_ms(2);
 
 	//check checksum
 	if ((uint8_t)(bits[0] + bits[1] + bits[2] + bits[3]) == bits[4]) {

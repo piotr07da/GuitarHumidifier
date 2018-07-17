@@ -32,8 +32,8 @@ void Display::SetValue(uint8_t value)
 
 void Display::Update()
 {
-	//++_timeCounter;
-	if (_timeCounter % 10 != 0)
+	++_timeCounter;
+	if (_timeCounter % 100 != 0)
 		return;
 
 	DisplayCurrentDigit();
