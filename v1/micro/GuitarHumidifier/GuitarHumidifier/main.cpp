@@ -5,16 +5,16 @@
  * Author : piotr
  */ 
 
- #include "GlobalConstants.h"
-
+ #include <GlobalConstants.h>
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <util/delay.h>
 
-#include "Pins.h"
-#include "Timer.h"
-#include "Display.h"
-#include "dht.h"
+#include <i2c_master.h>
+
+#include <Pins.h>
+#include <Timer.h>
+#include <Display.h>
 
 const uint8_t PinHdSelection = 0;
 const uint8_t PinLdSelection = 1;
@@ -63,7 +63,7 @@ int main(void)
 		{
 			float t;
 			float h;
-			dht_gettemperaturehumidity(&t, &h);
+			//dht_gettemperaturehumidity(&t, &h);
 			float x = th == 0 ? t : h;
 			_display.SetValue(x);
 			if (th == 0)
