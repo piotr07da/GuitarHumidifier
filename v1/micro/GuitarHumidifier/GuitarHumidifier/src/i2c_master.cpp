@@ -1,7 +1,7 @@
-#include <GlobalConstants.h>
+#include "GlobalConstants.h"
 #include <avr/io.h>
 #include <util/twi.h>
-#include <i2c_master.h>
+#include "i2c_master.h"
 
 #define F_SCL 100000UL // SCL frequency
 #define Prescaler 1
@@ -65,7 +65,6 @@ uint8_t I2c::i2c_read_ack(void)
 
 uint8_t I2c::i2c_read_nack(void)
 {
-
 	// start receiving without acknowledging reception
 	TWCR = (1<<TWINT) | (1<<TWEN);
 	// wait for end of transmission

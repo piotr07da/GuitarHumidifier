@@ -4,6 +4,8 @@
 #define I2C_READ 0x01
 #define I2C_WRITE 0x00
 
+#include <avr/io.h>
+
 class I2c
 {
 public:

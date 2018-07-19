@@ -142,42 +142,51 @@
     </ToolchainSettings>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="bme280.cpp">
+    <Compile Include="src\bme280.cpp">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="bme280.h">
+    <Compile Include="src\bme280.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="Display.cpp">
+    <Compile Include="src\Display.cpp">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="Display.h">
+    <Compile Include="src\Display.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="GlobalConstants.h">
+    <Compile Include="src\GlobalConstants.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="i2c_master.cpp">
+    <Compile Include="src\main.cpp">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="i2c_master.h">
+    <Compile Include="src\Pins.cpp">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="main.cpp">
+    <Compile Include="src\Pins.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="Pins.cpp">
+    <Compile Include="src\Timer.cpp">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="Pins.h">
+    <Compile Include="src\Timer.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="Timer.cpp">
+    <Compile Include="src\twi.c">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="Timer.h">
+    <Compile Include="src\twi.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="src\Wire.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\Wire.h">
+      <SubType>compile</SubType>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="src" />
   </ItemGroup>
   <Import Project="$(AVRSTUDIO_EXE_PATH)\\Vs\\Compiler.targets" />
 </Project>

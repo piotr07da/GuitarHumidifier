@@ -5,53 +5,30 @@
  */
 
 
-#include <bme280.h>
+#include "bme280.h"
 #include <math.h>
 #include <avr/io.h>
+#include "Wire.h"
 
 uint16_t Bme280::read8(uint8_t reg)
 {
-  uint16_t val;
-  
-  if (_i2c.i2c_start(BME280_ADDRESS<<1 | I2C_WRITE) == 0)
-  {
-    _i2c.i2c_write((uint8_t)reg);
-    
-    _i2c.i2c_stop();
-    
-    if (_i2c.i2c_start(BME280_ADDRESS<<1 | I2C_READ) == 0)
-    {
-      val |= ((uint16_t)_i2c.i2c_read_nack());
-      
-      _i2c.i2c_stop();
-      
-      return val;
-    }
-  }
+	uint8_t b;
+	if (ReadRegister(reg, &b))
+	{
+		return (uint16_t)b;
+	}
+	return 0;
 }
 
 
 uint16_t Bme280::read16(uint8_t reg)
 {
-  uint16_t val;
-  
-  if (_i2c.i2c_start(BME280_ADDRESS<<1 | I2C_WRITE) == 0)
+  uint8_t b[2];
+  if (ReadRegister(reg, b))
   {
-    _i2c.i2c_write((uint8_t)reg);
-    
-    _i2c.i2c_stop();
-    
-    if (_i2c.i2c_start(BME280_ADDRESS<<1 | I2C_READ) == 0)
-    {
-      val = ((uint16_t)_i2c.i2c_read_ack());
-      val <<= 8;
-      val |= ((uint16_t)_i2c.i2c_read_nack());
-      
-      _i2c.i2c_stop();
-      
-      return val;
-    }
+	  return ((uint16_t)b[0] << 8) | (uint16_t)b[1];
   }
+  return 0;
 }
 
 uint16_t Bme280::read16_LE(uint8_t reg)
@@ -75,31 +52,12 @@ int16_t Bme280::readS16_LE(uint8_t reg)
 
 uint32_t Bme280::read24(uint8_t reg)
 {
-  uint32_t val;
-
-  if (_i2c.i2c_start(BME280_ADDRESS<<1 | I2C_WRITE) == 0)
+  uint8_t b[3];
+  if (ReadRegister(reg, b))
   {
-    _i2c.i2c_write(reg);
-
-    _i2c.i2c_stop();
-
-    if (_i2c.i2c_start(BME280_ADDRESS<<1 | I2C_READ) == 0)
-    {
-      val = ((uint16_t)_i2c.i2c_read_ack());
-      val <<= 8;
-      val |= ((uint16_t)_i2c.i2c_read_ack());
-      val <<= 8;
-      val |= ((uint16_t)_i2c.i2c_read_nack());
-      
-      _i2c.i2c_stop();
-      
-      return val;
-    } else
-    {
-		// TODO - notify about it somehow
-      // uart_puts("Could not connect to sensor");
-    }
+	  return ((uint32_t)b[0] << 16) | ((uint32_t)b[1] << 8) | (uint32_t)b[2];
   }
+  return 0;
 }
 
 void Bme280::bme280_readCoefficients(void)
@@ -129,29 +87,32 @@ void Bme280::bme280_readCoefficients(void)
 
 void Bme280::bme280_init()
 {
-  
-  if (_i2c.i2c_start(BME280_ADDRESS<<1 | I2C_WRITE) == 0)
-  {
-    _i2c.i2c_write(BME280_REGISTER_CONTROLHUMID);
-    _i2c.i2c_write(0x05);
-    
-    _i2c.i2c_write(BME280_REGISTER_CONTROL);
-    _i2c.i2c_write(0xB7);
-    
-    _i2c.i2c_write(BME280_REGISTER_CHIPID);
-    
-    bme280_readCoefficients();
-    
-    _i2c.i2c_stop();
-    
-    if (_i2c.i2c_start(BME280_ADDRESS<<1 | I2C_READ) == 0)
-    {
-      //uint8_t val = _i2c.i2c_read_nack();
-      //uart_putc((char)val);
-      
-      _i2c.i2c_stop();
-    }
-  }
+	Wire.beginTransmission(BME280_ADDRESS);
+	Wire.write(BME280_REGISTER_CONTROLHUMID);
+	Wire.write(0x05);
+	Wire.write(BME280_REGISTER_CONTROL);
+	Wire.write(0xB7);
+	//Wire.write(BME280_REGISTER_CHIPID);
+	Wire.endTransmission();
+	bme280_readCoefficients();
+}
+
+uint8_t Bme280::bme280_readChipId(void)
+{
+	//uint8_t chipId;
+	//ReadRegister(BME280_REGISTER_CHIPID, &chipId);
+	//return chipId;
+	return read8(BME280_REGISTER_CHIPID);
+
+	//Wire.beginTransmission(BME280_ADDRESS);
+	//Wire.write(BME280_REGISTER_CHIPID);
+	//Wire.endTransmission();
+	//Wire.requestFrom(BME280_ADDRESS, 1);
+	//if (Wire.available())
+	//{
+		//return Wire.read();
+	//}
+	//return 19;
 }
 
 
@@ -214,7 +175,6 @@ float Bme280::bme280_readPressure(void)
 
 float Bme280::bme280_readHumidity(void)
 {
-  
   bme280_readTemperature(); // must be done first to get t_fine
   
   int32_t adc_H = read16(BME280_REGISTER_HUMIDDATA);
@@ -250,4 +210,19 @@ float Bme280::bme280_readAltitude(float seaLevel)
   float atmospheric = bme280_readPressure() / 100.0F;
   
   return 44330.0 * (1.0 - pow(atmospheric / seaLevel, 0.1903));
+}
+
+bool Bme280::ReadRegister(uint8_t registerAddress, uint8_t* bytes)
+{
+	Wire.beginTransmission(BME280_ADDRESS);
+	Wire.write(registerAddress);
+	Wire.endTransmission();
+	Wire.requestFrom(BME280_ADDRESS, 1);
+	uint8_t bIx = 0;
+	while (Wire.available())
+	{
+		*(bytes + bIx) = Wire.read();
+		++bIx;
+	}
+	return true;
 }

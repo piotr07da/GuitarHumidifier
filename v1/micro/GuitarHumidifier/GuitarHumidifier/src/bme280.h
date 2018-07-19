@@ -9,14 +9,13 @@
 #ifndef bme280_h
 #define bme280_h
 
-#include <GlobalConstants.h>
+#include "GlobalConstants.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <avr/io.h>
 #include <util/delay.h>
-#include <i2c_master.h>
 
-#define BME280_ADDRESS                (0x77)
+#define BME280_ADDRESS                (0x76)
 
 typedef struct
 {
@@ -84,12 +83,12 @@ enum
 class Bme280
 {
 private:
-	uint32_t t_fine; //must be global
+	int32_t t_fine; //must be global
 	bme280_calib_data _bme280_calib;
-	I2c _i2c;
 
 public:
 	void bme280_init(void);
+	uint8_t bme280_readChipId(void);
 	float bme280_readTemperature(void);
 	float bme280_readPressure(void);
 	float bme280_readHumidity(void);
@@ -101,7 +100,9 @@ private:
 	uint16_t read16(uint8_t reg);
 	uint16_t read16_LE(uint8_t reg);
 	int16_t readS16(uint8_t reg);
+	int16_t readS16_LE(uint8_t reg);
 	uint32_t read24(uint8_t reg);
+	bool ReadRegister(uint8_t registerAddress, uint8_t* bytes);
 
 	
 };
