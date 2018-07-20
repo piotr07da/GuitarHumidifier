@@ -19,7 +19,7 @@ void Timer::Initialize(uint64_t fcpu)
 	//TCCR0A |= _BV(COM0A0) | _BV(WGM01);
 
 	// Clock/8
-	TCCR0 |= _BV(CS01);
+	TCCR0A |= _BV(CS01);
 	
 	//OCF0A
 
@@ -27,7 +27,7 @@ void Timer::Initialize(uint64_t fcpu)
 	//OCR0A = 0xFF;
 	
 	// Enable the compare match interrupt
-	TIMSK |= _BV(TOIE0);
+	TIMSK0 |= _BV(TOIE0);
 }
 
 uint32_t Timer::Microseconds()

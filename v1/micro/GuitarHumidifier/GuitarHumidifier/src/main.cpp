@@ -13,20 +13,21 @@
 
 #include "Wire.h"
 
-#include "bme280.h"
+#include "BoschSensortec/bme280_defs.h"
+#include "BoschSensortec/bme280.h"
 
 #include "Pins.h"
 #include "Timer.h"
 #include "Display.h"
 
-const uint8_t PinHdSelection = 0;
-const uint8_t PinLdSelection = 1;
-const uint8_t PinDht22Data = 5;
-const uint8_t DataBitPin = 2;
-const uint8_t DataBitClockPin = 3;
-const uint8_t DigitLatchPin = 4;
+#define __avc_BR 9600UL // bit rate
+#define __avc_UBRR (F_CPU / (16UL * __avc_BR)) - 1 // usart baud rate register
 
-const uint8_t DigitSelectionPins[2] = { 0, 1 };
+const uint8_t DataBitPin = PIND2;
+const uint8_t DataBitClockPin = PIND3;
+const uint8_t DigitLatchPin = PIND4;
+
+const uint8_t DigitSelectionPins[2] = { PINC3, PINC2 };
 
 const uint32_t CounterDivider = 2000;
 
@@ -35,47 +36,117 @@ uint8_t _digitIx = 0;
 
 Timer _timer;
 Display _display;
-Bme280 _bme280;
 
 
+bme280_dev _bme280dev;
+int8_t _rslt = BME280_OK;
+bme280_data _data;
 
-float _targetVolume = .5;
-float _minAngle = -110;
-float _maxAngle = 165;
-float _smoothRatio = .2;
-float _prevVol = 0;
+void InitUSART(uint8_t ubrr);
+void SendByteUSART(uint8_t byte);
+void SendValue(char type, float v);
+void SendValue(char type, int32_t v);
+void SendValue(char type, uint32_t v);
 
 
-void Setup();
+int8_t user_i2c_read(uint8_t dev_id, uint8_t reg_addr, uint8_t *data, uint16_t len)
+{
+	int8_t rslt = 0;
 
-bool ReadAxisAcceleration(uint8_t axisIndex, float* acceleration);
+	Wire.beginTransmission(dev_id);
+	Wire.write(reg_addr);
+	Wire.endTransmission();
 
-bool ReadRegister(uint8_t registerAddress, uint8_t* byte);
+	Wire.requestFrom(dev_id, len);
+	uint16_t bIx = 0;
+	while (Wire.available())
+	{
+		*(data + bIx) = Wire.read();
+		++bIx;
+	}
+	Wire.endTransmission();
 
-float CurrentVolume();
+	return rslt;
+}
 
-float _a = 0;
+int8_t user_i2c_write(uint8_t dev_id, uint8_t reg_addr, uint8_t *data, uint16_t len)
+{
+	int8_t rslt = 0;
+
+	Wire.beginTransmission(dev_id);
+	Wire.write(reg_addr);
+	uint16_t bIx = 0;
+	while (bIx < len)
+	{
+		Wire.write(data[bIx]);
+		++bIx;
+	}
+	Wire.endTransmission();
+
+	return rslt;
+}
+
+void user_delay_ms(uint32_t period)
+{
+	_delay_ms(period);
+}
+
 
 int main(void)
 {
-	DDRB |= _BV(1);
+	DDRD |= _BV(5) | _BV(6) | _BV(7);
 	//PORTB |= _BV(1);
 
 	//_timer.Initialize(F_CPU);
 	_display.Initialize(2, DigitLatchPin, DataBitClockPin, DataBitPin, DigitSelectionPins);
 	//_dht.Initialize(PinDht22Data, &_timer);
 
-	Wire.begin();
+	InitUSART(__avc_UBRR);
 
 	sei();
 
-	_display.SetValue(99);
+	Wire.begin();
+
+
+	_bme280dev.dev_id = BME280_I2C_ADDR_PRIM;
+	_bme280dev.intf = BME280_I2C_INTF;
+	_bme280dev.read = user_i2c_read;
+	_bme280dev.write = user_i2c_write;
+	_bme280dev.delay_ms = user_delay_ms;
+
+	_rslt = bme280_init(&_bme280dev);
+
+	//uint8_t chipId;
+	//user_i2c_read(BME280_I2C_ADDR_PRIM, BME280_CHIP_ID_ADDR, &chipId, 1);
+	//user_i2c_read(0x0A, 0x04, &chipId, 1);
+	//_rslt = -chipId;
+
+	
+
+	_display.SetValue(_bme280dev.chip_id);
+	_display.Update();
 
 	uint8_t th = 0;
 
-	_bme280.bme280_init();
+	//_bme280.bme280_init();
 
 	//Setup();
+
+	
+	_bme280dev.settings.osr_h = BME280_OVERSAMPLING_1X;
+	_bme280dev.settings.osr_p = BME280_OVERSAMPLING_16X;
+	_bme280dev.settings.osr_t = BME280_OVERSAMPLING_2X;
+	_bme280dev.settings.filter = BME280_FILTER_COEFF_16;
+	_bme280dev.settings.standby_time = BME280_STANDBY_TIME_1_MS;
+
+	uint8_t settings_sel = BME280_OSR_PRESS_SEL;
+	settings_sel |= BME280_OSR_TEMP_SEL;
+	settings_sel |= BME280_OSR_HUM_SEL;
+	settings_sel |= BME280_STANDBY_SEL;
+	settings_sel |= BME280_FILTER_SEL;
+	bme280_set_sensor_settings(settings_sel, &_bme280dev);
+	bme280_set_sensor_mode(BME280_NORMAL_MODE, &_bme280dev);
+	
 
 	while (1)
     {
@@ -94,28 +165,38 @@ int main(void)
 		//}
 		
 
-		if (_counter % 10000 == 0)
+		if (_counter % 50000 == 0)
 		{
-			float t = 3;
-			float h = 3;
-			float p = 3;
-			t = _bme280.bme280_readTemperature();
-			h = _bme280.bme280_readHumidity();
-			//p = _bme280.bme280_readPressure();
+			int32_t t = 3;
+			uint32_t h = 3;
+			uint32_t p = 3;
 			
-			float x;
+			bme280_get_sensor_data(BME280_ALL, &_data, &_bme280dev);
+
+			t = _data.temperature / 100;
+			h = _data.humidity >> 10;
+			p = (_data.pressure >> 8) / 10;
+
 			if (th == 0)
-				x = t;
+			{
+				SendValue('T', t);
+				PORTD &= 0b00011111;
+				PORTD |= _BV(5);
+			}
 			else if (th == 1)
-				x = h;
+			{
+				SendValue('H', h);
+				PORTD &= 0b00011111;
+				PORTD |= _BV(6);
+			}
 			else
-				x = p;
+			{
+				SendValue('P', p);
+				PORTD &= 0b00011111;
+				PORTD |= _BV(7);
+			}
 
-			uint8_t chipId = _bme280.bme280_readChipId();
-			if (chipId == 2)
-				chipId = 13;
-
-			_display.SetValue(x);
+			_display.SetValue(19);
 			++th;
 			if (th == 3)
 				th = 0;
@@ -123,76 +204,69 @@ int main(void)
 		
 		_display.Update();
 
-		PORTD ^= _BV(6);
-
 		++ _counter;
     }
 }
 
 
-void Setup()
+ISR (USART_RX_vect)
 {
-		Wire.beginTransmission(0x0A);
-		Wire.write(0x22); // set sensitivity register
-		Wire.write(0x00); // write mode value to sensitivity register
-		Wire.write(0x20); // set filter register
-		Wire.write(0x05); // write mode value to filter register
-		Wire.endTransmission();
+	uint8_t b = UDR0;
 }
 
-bool ReadAxisAcceleration(uint8_t axisIndex, float* acceleration)
+void InitUSART(uint8_t ubrr)
 {
-	uint8_t reg;
-	switch (axisIndex)
-	{
-		case 0: reg = 0x04; break;
-		case 1: reg = 0x06; break;
-		case 2: reg = 0x08; break;
-		default: return false;
-	}
-
-	uint8_t rb;
-	if (!ReadRegister(reg, &rb))
-		return false;
-
-	int8_t srb = (int8_t)rb >> 2;
-	*acceleration = (float)srb / (float)16.0;
-		return true;
-}
-
-bool ReadRegister(uint8_t registerAddress, uint8_t* byte)
-{
-	{
-		Wire.beginTransmission(0x0A);
-		Wire.write(registerAddress);
-		Wire.endTransmission();
-		Wire.requestFrom(0x0A, 1);
-		if (Wire.available())
-		{
-			*byte = Wire.read();
-			return true;
-		}
-		return false;
-	}
-}
-
-float CurrentVolume()
-{
-
-	float x0;
-	float x1;
-	ReadAxisAcceleration(1, &x0);
-	ReadAxisAcceleration(2, &x1);
+	// Set the baud rate.
+	UBRR0H = (unsigned char)(ubrr >> 8);
+	UBRR0L = (unsigned char)(ubrr);
 	
-	float mag = (float)sqrt(x0 * x0 + x1 * x1);
-	x0 /= mag;
-	x1 /= mag;
+	// Enable UART receiver and transmitter and receiver interrupt handlings
+	UCSR0B = _BV(RXEN0) | _BV(TXEN0) | _BV(RXCIE0);
+	
+	// Set to 8 data bits, 1 stop bit, async
+	UCSR0C = _BV(UCSZ01) | _BV(UCSZ00);
+}
 
-	float angle = (float)atan2(x1, x0);
-	angle = 180.0 * angle / M_PI;
+void SendByteUSART(uint8_t byte)
+{
+	while (!(UCSR0A & _BV(UDRE0))) ;
+	UDR0 = byte;
+}
 
-	float vol = (angle - _minAngle) / (_maxAngle - _minAngle);
+void SendValue(char type, float v)
+{
+	char s[10];
+	for (int i = 0; i < 10; ++i)
+		s[i] = '#';
 
-	_prevVol = _prevVol + _smoothRatio * (vol - _prevVol);
-	return _prevVol;
+	dtostrf(v, 10, 5, s);
+	
+	SendByteUSART('|');
+	SendByteUSART(type);
+	SendByteUSART('=');
+	for (int i = 0; i < 10; ++i)
+		SendByteUSART(s[i]);
+	SendByteUSART('|');
+	SendByteUSART('\n');
+}
+
+
+void SendValue(char type, int32_t v)
+{
+	char c[50];
+	for (int i = 0; i < 50; ++i)
+		c[i] = ' ';
+	itoa((int)v, c, 10);
+	SendByteUSART('|');
+	SendByteUSART(type);
+	SendByteUSART('=');
+	for (int i = 0; i < 50; ++i)
+		SendByteUSART(c[i]);
+	SendByteUSART('|');
+	SendByteUSART('\n');
+}
+
+void SendValue(char type, uint32_t v)
+{
+	SendValue(type, (int32_t)v);
 }

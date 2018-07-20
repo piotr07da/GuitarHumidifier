@@ -7,6 +7,14 @@
 
 #include "Pins.h"
 
+void PinModeC(uint8_t pin, uint8_t mode)
+{
+	if (mode == 0)
+	DDRC &= ~_BV(pin);
+	else
+	DDRC |= _BV(pin);
+}
+
 void PinModeD(uint8_t pin, uint8_t mode)
 {
 	if (mode == 0)
@@ -34,6 +42,14 @@ void ShiftOutD(uint8_t dataPin, uint8_t clockPin, uint8_t bitOrder, uint8_t val)
 void DigitalReadD(uint8_t pin, uint8_t* value)
 {
 	*value = !!(PIND & _BV(pin));
+}
+
+void DigitalWriteC(uint8_t pin, uint8_t value)
+{
+	if (value == 0)
+	PORTC &= ~_BV(pin);
+	else
+	PORTC |= _BV(pin);
 }
 
 void DigitalWriteD(uint8_t pin, uint8_t value)

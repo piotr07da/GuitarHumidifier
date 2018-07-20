@@ -22,7 +22,7 @@ void Display::Initialize(uint8_t digitCount, uint8_t digitLatchPin, uint8_t data
 
 	DDRD |= _BV(_digitLatchPin) | _BV(_dataBitClockPin) | _BV(_dataBitPin);
 	for (uint8_t ix = 0; ix < _digitCount; ++ix)
-		DDRD |= _BV(_digitSelectionPins[ix]);
+		DDRC |= _BV(_digitSelectionPins[ix]);
 }
 
 void Display::SetValue(uint8_t value)
@@ -45,7 +45,7 @@ void Display::Update()
 
 void Display::DisplayCurrentDigit()
 {
-	DigitalWriteD(_digitSelectionPin, 0);
+	DigitalWriteC(_digitSelectionPin, 0);
 	
 	_digitSelectionPin = _digitSelectionPins[_digitIndex];
 
@@ -56,7 +56,7 @@ void Display::DisplayCurrentDigit()
 
 	DisplayDigit(digitValue);
 
-	DigitalWriteD(_digitSelectionPin, 1);
+	DigitalWriteC(_digitSelectionPin, 1);
 
 }
 
