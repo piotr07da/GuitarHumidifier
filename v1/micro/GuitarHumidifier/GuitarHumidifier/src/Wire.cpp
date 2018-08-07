@@ -27,6 +27,7 @@ extern "C" {
 }
 
 #include "Wire.h"
+#include <avr/io.h>
 
 // Initialize Class Variables //////////////////////////////////////////////////
 
@@ -98,7 +99,7 @@ uint8_t TwoWire::requestFrom(uint8_t address, uint8_t quantity, uint32_t iaddres
   if (isize > 3){
     isize = 3;
   }
-
+  
   // write internal register address - most significant byte first
   while (isize-- > 0)
     write((uint8_t)(iaddress >> (isize*8)));
@@ -109,8 +110,10 @@ uint8_t TwoWire::requestFrom(uint8_t address, uint8_t quantity, uint32_t iaddres
   if(quantity > BUFFER_LENGTH){
     quantity = BUFFER_LENGTH;
   }
+  
   // perform blocking read into buffer
   uint8_t read = twi_readFrom(address, rxBuffer, quantity, sendStop);
+  
   // set rx buffer iterator vars
   rxBufferIndex = 0;
   rxBufferLength = read;
@@ -168,8 +171,10 @@ void TwoWire::beginTransmission(int address)
 //
 uint8_t TwoWire::endTransmission(uint8_t sendStop)
 {
+
   // transmit buffer (blocking)
   uint8_t ret = twi_writeTo(txAddress, txBuffer, txBufferLength, 1, sendStop);
+  
   // reset tx buffer iterator vars
   txBufferIndex = 0;
   txBufferLength = 0;

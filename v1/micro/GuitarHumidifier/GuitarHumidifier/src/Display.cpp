@@ -20,9 +20,9 @@ void Display::Initialize(uint8_t digitCount, uint8_t digitLatchPin, uint8_t data
 	_digitSelectionPins = (uint8_t*)digitSelectionPins;
 	_digitSelectionPin = _digitSelectionPins[0];
 
-	DDRD |= _BV(_digitLatchPin) | _BV(_dataBitClockPin) | _BV(_dataBitPin);
+	DDRB |= _BV(_digitLatchPin) | _BV(_dataBitClockPin) | _BV(_dataBitPin);
 	for (uint8_t ix = 0; ix < _digitCount; ++ix)
-		DDRC |= _BV(_digitSelectionPins[ix]);
+		DDRD |= _BV(_digitSelectionPins[ix]);
 }
 
 void Display::SetValue(uint8_t value)
@@ -45,7 +45,7 @@ void Display::Update()
 
 void Display::DisplayCurrentDigit()
 {
-	DigitalWriteC(_digitSelectionPin, 0);
+	DigitalWriteD(_digitSelectionPin, 0);
 	
 	_digitSelectionPin = _digitSelectionPins[_digitIndex];
 
@@ -56,7 +56,7 @@ void Display::DisplayCurrentDigit()
 
 	DisplayDigit(digitValue);
 
-	DigitalWriteC(_digitSelectionPin, 1);
+	DigitalWriteD(_digitSelectionPin, 1);
 
 }
 
@@ -65,12 +65,12 @@ void Display::DisplayDigit(uint8_t digitIndex)
 	uint8_t dp = DigitSegmentBits[digitIndex];
 
 	// turn off the output of 74HC595
-	DigitalWriteD(_digitLatchPin, 0);
+	DigitalWriteB(_digitLatchPin, 0);
 
 	// update data pattern to be outputed from 74HC595
 	// because it's a common anode LED, the pattern needs to be inverted
-	ShiftOutD(_dataBitPin, _dataBitClockPin, 1, ~dp);
+	ShiftOutB(_dataBitPin, _dataBitClockPin, 1, ~dp);
 
 	// turn on the output of 74HC595
-	DigitalWriteD(_digitLatchPin, 1);
+	DigitalWriteB(_digitLatchPin, 1);
 }

@@ -10,7 +10,7 @@
 #define GLOBALCONSTANTS_H_
 
 #define F_CPU 14745600UL
-
+//#define F_CPU 1000000UL
 
 
 #endif /* GLOBALCONSTANTS_H_ */

@@ -141,16 +141,18 @@ void twi_setFrequency(uint32_t frequency)
 uint8_t twi_readFrom(uint8_t address, uint8_t* data, uint8_t length, uint8_t sendStop)
 {
   uint8_t i;
+  uint16_t timeoutCounter = 0;
 
   // ensure data will fit into buffer
   if(TWI_BUFFER_LENGTH < length){
     return 0;
   }
-
+  
   // wait until twi is ready, become master receiver
-  while(TWI_READY != twi_state){
+  while(TWI_READY != twi_state &&  ++timeoutCounter <= 1000){
     continue;
   }
+  
   twi_state = TWI_MRX;
   twi_sendStop = sendStop;
   // reset error state (0xFF.. no error occured)
@@ -186,8 +188,11 @@ uint8_t twi_readFrom(uint8_t address, uint8_t* data, uint8_t length, uint8_t sen
     // send start condition
     TWCR = _BV(TWEN) | _BV(TWIE) | _BV(TWEA) | _BV(TWINT) | _BV(TWSTA);
 
+	
+
   // wait for read operation to complete
-  while(TWI_MRX == twi_state){
+  timeoutCounter = 0;
+  while(TWI_MRX == twi_state &&  ++timeoutCounter <= 1000){
     continue;
   }
 
@@ -220,6 +225,7 @@ uint8_t twi_readFrom(uint8_t address, uint8_t* data, uint8_t length, uint8_t sen
 uint8_t twi_writeTo(uint8_t address, uint8_t* data, uint8_t length, uint8_t wait, uint8_t sendStop)
 {
   uint8_t i;
+  uint16_t timeoutCounter = 0;
 
   // ensure data will fit into buffer
   if(TWI_BUFFER_LENGTH < length){
@@ -227,7 +233,7 @@ uint8_t twi_writeTo(uint8_t address, uint8_t* data, uint8_t length, uint8_t wait
   }
 
   // wait until twi is ready, become master transmitter
-  while(TWI_READY != twi_state){
+  while(TWI_READY != twi_state && ++timeoutCounter <= 1000){
     continue;
   }
   twi_state = TWI_MTX;
@@ -268,8 +274,9 @@ uint8_t twi_writeTo(uint8_t address, uint8_t* data, uint8_t length, uint8_t wait
     // send start condition
     TWCR = _BV(TWINT) | _BV(TWEA) | _BV(TWEN) | _BV(TWIE) | _BV(TWSTA);	// enable INTs
 
+	timeoutCounter = 0;
   // wait for write operation to complete
-  while(wait && (TWI_MTX == twi_state)){
+  while(wait && (TWI_MTX == twi_state) && ++timeoutCounter <= 1000){
     continue;
   }
   
